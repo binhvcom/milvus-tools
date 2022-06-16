@@ -353,3 +353,8 @@ If you would like to contribute code to this project, you can find out more abou
   - [ ] Support for merging multiple collections or partitions in source_milvus into one collection in dest_milvus.
 - [ ] Milvud Dump
 - [ ] Milvus Restore
+
+## Warning
+This branch update the mode append
+it will only copy the different vector, not copy all like current append
+This branch develop for specific use case, use it with your own risk !
