@@ -15,7 +15,7 @@ class MilvusToMilvus():
         self.milvusdb_dest = milvusdb_dest
         self.milvus_meta_dest = milvus_meta_dest     
         self.milvus_insert = milvus_insert
-        self.milvusdir_dest = milvusdir_dest + '/dest/tables'
+        self.milvusdir_dest = milvusdir_dest + '/db/tables'
         self.mode = mode
 
     def insert_collection_data(self, collection_name, partition_tags, collection_parameter):
