@@ -25,7 +25,7 @@ class MilvusToMilvus():
                 self.milvus_insert.if_create_collection(collection_name, partition_tag)
             # If partition is empty, read_milvus_file will return (None, None, 0)
     
-            if self.mode=='append_skip' and os.path.exists(milvusdir_dest):
+            if self.mode=='append_skip' and os.path.exists(self.milvusdir_dest):
                 r_vectors_source, r_ids_source, r_rows_source = self.milvusdb.read_milvus_file(self.milvus_meta, collection_name, partition_tag)
                 r_vectors_dest, r_ids_dest, r_rows_dest = self.milvusdb_dest.read_milvus_file(self.milvus_meta_dest, collection_name, partition_tag)
                 r_vectors = r_vectors_source - r_vectors_dest
