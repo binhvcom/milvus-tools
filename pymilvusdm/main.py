@@ -88,7 +88,7 @@ def mil2mil(config, logger):
 
         milvus_insert = DataToMilvus(logger, milvus_client)
 
-        m2m = MilvusToMilvus(logger, milvusdb, milvus_meta, milvusdb_dest, milvus_meta_dest, '/var/lib/milvus/dest/tables', milvus_insert, config['mode'])
+        m2m = MilvusToMilvus(logger, milvusdb, milvus_meta, milvusdb_dest, milvus_meta_dest, config['dest_milvus_path'], milvus_insert, config['mode'])
 
         try:
             collection_name = list(config['source_collection'].keys())[0]         
