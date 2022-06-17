@@ -26,7 +26,7 @@ class MilvusToMilvus():
                 self.logger.info('The collection: {}/partition: {} has no data'.format(collection_name, partition_tag))
             elif r_rows == len(r_vectors) == len(r_ids):
                 if is_tmp:
-                    self.milvus_insert.insert_data(r_vectors, collection_name + '_tmp', collection_parameter, self.mode, r_ids, partition_tag + '_tmp')
+                    self.milvus_insert.insert_data(r_vectors, str(collection_name) + '_tmp', collection_parameter, self.mode, r_ids, str(partition_tag) + '_tmp')
                 else:
                     self.milvus_insert.insert_data(r_vectors, collection_name, collection_parameter, self.mode, r_ids, partition_tag)
             else:
