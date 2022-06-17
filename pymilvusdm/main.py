@@ -80,27 +80,34 @@ def mil2mil(config, logger):
             raise Exception("Please configure the required parameters: {}".format(
                 'source_milvus_path, source_collection, dest_host, dest_port, mode'))
         milvus_client = MilvusIndex(logger, config['dest_host'], config['dest_port'])
+
         milvus_client_real = MilvusIndex(logger, config['source_host'], config['source_port'])
         milvusdb_real = ReadMilvusDB(logger, config['source_milvus_path'], config['mysql_parameter'])
         milvus_meta_real = ReadMilvusMeta(logger, config['source_milvus_path'], config['mysql_parameter'])
-        milvusdb_tmp = ReadMilvusDB(logger, config['source_milvus_tmp_path'], config['mysql_parameter_tmp'])
-        milvus_meta_tmp = ReadMilvusMeta(logger, config['source_milvus_tmp_path'], config['mysql_parameter_tmp'])
+
+        milvusdb_tmp = ReadMilvusDB(logger, config['source_milvus_path'], config['mysql_parameter'])
+        milvus_meta_tmp = ReadMilvusMeta(logger, config['source_milvus_path'], config['mysql_parameter'])
+
         milvusdb = milvusdb_real - milvusdb_tmp
         milvus_meta = milvus_meta_real - milvus_meta_tmp
-        milvus_insert_real = DataToMilvus(logger, milvus_client_real)
         milvus_insert = DataToMilvus(logger, milvus_client)
 
         m2m = MilvusToMilvus(logger, milvusdb, milvus_meta, milvus_insert, config['mode'])
-        m2m_real = MilvusToMilvus(logger, milvusdb_real, milvus_meta_real, milvus_insert_real, config['mode'])
 
         try:
             collection_name = list(config['source_collection'].keys())[0]         
         except Exception as e:
             logger.error("The collection name: {} must be a dic".format(config['source_collection']))
             sys.exit(1)
-    
-        m2m.transform_milvus_data(collection_name, config['source_collection'][collection_name])
-        m2m_real.transform_milvus_data(collection_name, config['source_collection'][collection_name])
+
+        is_tmp = 'false'
+        m2m.transform_milvus_data(collection_name, config['source_collection'][collection_name], is_tmp)
+
+        is_tmp = 'true'
+        milvus_insert_real = DataToMilvus(logger, milvus_client_real)
+        m2m_real = MilvusToMilvus(logger, milvusdb_real, milvus_meta_real, milvus_insert_real, config['mode'])
+        m2m_real.transform_milvus_data(collection_name, config['source_collection'][collection_name], is_tmp)
+
     except Exception as e:
         logger.error('Milvus to Milvus Error with: {}'.format(e))
         sys.exit(1)

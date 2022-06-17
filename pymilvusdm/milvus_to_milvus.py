@@ -15,7 +15,7 @@ class MilvusToMilvus():
         self.milvus_insert = milvus_insert
         self.mode = mode
 
-    def insert_collection_data(self, collection_name, partition_tags, collection_parameter):
+    def insert_collection_data(self, collection_name, partition_tags, collection_parameter, is_tmp):
         pbar = tqdm(partition_tags)
         for partition_tag in pbar:
             if self.mode=='skip':
@@ -25,11 +25,14 @@ class MilvusToMilvus():
             if r_rows == 0:
                 self.logger.info('The collection: {}/partition: {} has no data'.format(collection_name, partition_tag))
             elif r_rows == len(r_vectors) == len(r_ids):
-                self.milvus_insert.insert_data(r_vectors, collection_name, collection_parameter, self.mode, r_ids, partition_tag)
+                if is_tmp:
+                    self.milvus_insert.insert_data(r_vectors, collection_name + '_tmp', collection_parameter, self.mode, r_ids, partition_tag + '_tmp')
+                else:
+                    self.milvus_insert.insert_data(r_vectors, collection_name, collection_parameter, self.mode, r_ids, partition_tag)
             else:
                 self.logger.error("The collection: {}/partition: {} data count is not equal, data[meta_rows, read_vectors, read_ids] rows:{}!".format(collection_name, partition_tag, [r_rows, len(r_vectors), len(r_ids)]))
 
-    def transform_milvus_data(self, collection_name, partition_tags):
+    def transform_milvus_data(self, collection_name, partition_tags, is_tmp):
         try:
             if not self.milvus_meta.has_collection_meta(collection_name):
                 raise Exception("The source collection: {} does not exists.".format(collection_name))
@@ -41,7 +44,7 @@ class MilvusToMilvus():
             self.logger.info("Ready to transform all data of collection: {}/partitions: {}".format(collection_name, partition_tags))
 
             collection_parameter, _ = self.milvus_meta.get_collection_info(collection_name)
-            self.insert_collection_data(collection_name, partition_tags, collection_parameter)
+            self.insert_collection_data(collection_name, partition_tags, collection_parameter, is_tmp)
             self.logger.info("Successfully transformed all data.")
         except Exception as e:
             self.logger.error('Error with: {}'.format(e))
