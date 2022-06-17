@@ -8,31 +8,39 @@ from pymilvusdm.core.write_logs import write_log
 from tqdm import tqdm
 
 class MilvusToMilvus():
-    def __init__(self, logger, milvusdb, milvus_meta, milvus_insert, mode):
+    def __init__(self, logger, milvusdb, milvus_meta, milvusdb_dest, milvus_meta_dest, milvus_insert, mode):
         self.logger = logger
         self.milvusdb = milvusdb
         self.milvus_meta = milvus_meta
+        self.milvusdb_dest = milvusdb_dest
+        self.milvus_meta_dest = milvus_meta_dest     
         self.milvus_insert = milvus_insert
         self.mode = mode
 
-    def insert_collection_data(self, collection_name, partition_tags, collection_parameter, is_tmp):
+    def insert_collection_data(self, collection_name, partition_tags, collection_parameter):
         pbar = tqdm(partition_tags)
         for partition_tag in pbar:
             if self.mode=='skip':
                 self.milvus_insert.if_create_collection(collection_name, partition_tag)
             # If partition is empty, read_milvus_file will return (None, None, 0)
-            r_vectors, r_ids, r_rows = self.milvusdb.read_milvus_file(self.milvus_meta, collection_name, partition_tag)
+    
+            if self.mode=='append_skip':
+                r_vectors_source, r_ids_source, r_rows_source = self.milvusdb.read_milvus_file(self.milvus_meta, collection_name, partition_tag)
+                r_vectors_dest, r_ids_dest, r_rows_dest = self.milvusdb_dest.read_milvus_file(self.milvus_meta_dest, collection_name, partition_tag)
+                r_vectors = r_vectors_source - r_vectors_dest
+                r_ids = r_ids_source - r_ids_dest
+                r_rows = r_rows_source - r_rows_dest
+            else:
+                r_vectors, r_ids, r_rows = self.milvusdb.read_milvus_file(self.milvus_meta, collection_name, partition_tag)
+
             if r_rows == 0:
                 self.logger.info('The collection: {}/partition: {} has no data'.format(collection_name, partition_tag))
             elif r_rows == len(r_vectors) == len(r_ids):
-                if is_tmp:
-                    self.milvus_insert.insert_data(r_vectors, str(collection_name) + '_tmp', collection_parameter, self.mode, r_ids, str(partition_tag) + '_tmp')
-                else:
-                    self.milvus_insert.insert_data(r_vectors, collection_name, collection_parameter, self.mode, r_ids, partition_tag)
+                self.milvus_insert.insert_data(r_vectors, collection_name, collection_parameter, self.mode, r_ids, partition_tag)
             else:
                 self.logger.error("The collection: {}/partition: {} data count is not equal, data[meta_rows, read_vectors, read_ids] rows:{}!".format(collection_name, partition_tag, [r_rows, len(r_vectors), len(r_ids)]))
 
-    def transform_milvus_data(self, collection_name, partition_tags, is_tmp):
+    def transform_milvus_data(self, collection_name, partition_tags):
         try:
             if not self.milvus_meta.has_collection_meta(collection_name):
                 raise Exception("The source collection: {} does not exists.".format(collection_name))
@@ -44,7 +52,7 @@ class MilvusToMilvus():
             self.logger.info("Ready to transform all data of collection: {}/partitions: {}".format(collection_name, partition_tags))
 
             collection_parameter, _ = self.milvus_meta.get_collection_info(collection_name)
-            self.insert_collection_data(collection_name, partition_tags, collection_parameter, is_tmp)
+            self.insert_collection_data(collection_name, partition_tags, collection_parameter)
             self.logger.info("Successfully transformed all data.")
         except Exception as e:
             self.logger.error('Error with: {}'.format(e))

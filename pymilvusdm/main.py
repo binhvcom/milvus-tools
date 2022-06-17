@@ -79,13 +79,16 @@ def mil2mil(config, logger):
             'dest_port'] and config['mode']):
             raise Exception("Please configure the required parameters: {}".format(
                 'source_milvus_path, source_collection, dest_host, dest_port, mode'))
-        is_tmp = 'false'
         milvus_client = MilvusIndex(logger, config['dest_host'], config['dest_port'])
         milvusdb = ReadMilvusDB(logger, config['source_milvus_path'], config['mysql_parameter'])
         milvus_meta = ReadMilvusMeta(logger, config['source_milvus_path'], config['mysql_parameter'])
+
+        milvusdb_dest = ReadMilvusDB(logger, config['dest_milvus_path'], config['mysql_parameter'])
+        milvus_meta_dest = ReadMilvusMeta(logger, config['dest_milvus_path'], config['mysql_parameter'])
+
         milvus_insert = DataToMilvus(logger, milvus_client)
 
-        m2m = MilvusToMilvus(logger, milvusdb, milvus_meta, milvus_insert, config['mode'])
+        m2m = MilvusToMilvus(logger, milvusdb, milvus_meta, milvusdb_dest, milvus_meta_dest, milvus_insert, config['mode'])
 
         try:
             collection_name = list(config['source_collection'].keys())[0]         
@@ -93,13 +96,7 @@ def mil2mil(config, logger):
             logger.error("The collection name: {} must be a dic".format(config['source_collection']))
             sys.exit(1)
 
-        m2m.transform_milvus_data(collection_name, config['source_collection'][collection_name], is_tmp)
-
-        is_tmp = 'true'
-        milvus_client_tmp = MilvusIndex(logger, config['source_host'], config['source_port'])
-        milvus_insert_tmp = DataToMilvus(logger, milvus_client_tmp)
-        m2m_real = MilvusToMilvus(logger, milvusdb, milvus_meta, milvus_insert_tmp, config['mode'])
-        m2m_real.transform_milvus_data(collection_name, config['source_collection'][collection_name], is_tmp)
+        m2m.transform_milvus_data(collection_name, config['source_collection'][collection_name])
 
     except Exception as e:
         logger.error('Milvus to Milvus Error with: {}'.format(e))
