@@ -8,14 +8,13 @@ from pymilvusdm.core.write_logs import write_log
 from tqdm import tqdm
 
 class MilvusToMilvus():
-    def __init__(self, logger, milvusdb, milvus_meta, milvusdb_dest, milvus_meta_dest, milvusdir_dest, milvus_insert, mode):
+    def __init__(self, logger, milvusdb, milvus_meta, milvusdb_dest, milvus_meta_dest, milvus_insert, mode):
         self.logger = logger
         self.milvusdb = milvusdb
         self.milvus_meta = milvus_meta
         self.milvusdb_dest = milvusdb_dest
         self.milvus_meta_dest = milvus_meta_dest     
         self.milvus_insert = milvus_insert
-        self.milvusdir_dest = milvusdir_dest + '/db/tables'
         self.mode = mode
 
     def insert_collection_data(self, collection_name, partition_tags, collection_parameter):
@@ -25,7 +24,7 @@ class MilvusToMilvus():
                 self.milvus_insert.if_create_collection(collection_name, partition_tag)
             # If partition is empty, read_milvus_file will return (None, None, 0)
     
-            if self.mode=='append_skip' and os.path.exists(self.milvusdir_dest):
+            if self.mode=='append_skip' and self.milvus_meta_dest.has_collection_meta(collection_name):
                 r_vectors_source, r_ids_source, r_rows_source = self.milvusdb.read_milvus_file(self.milvus_meta, collection_name, partition_tag)
                 r_vectors_dest, r_ids_dest, r_rows_dest = self.milvusdb_dest.read_milvus_file(self.milvus_meta_dest, collection_name, partition_tag)
                 r_vectors = r_vectors_source - r_vectors_dest

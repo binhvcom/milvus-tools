@@ -49,7 +49,7 @@ class DataToMilvus:
             collection_param = {'collection_name': collection, 'dimension': collection_param_1['dimension'],
                                 'index_file_size': collection_param_1['index_file_size'], 'metric_type': metric_type}
             has_collection = self.client.has_collection(collection)
-            if partition:
+            if partition is not None:
                 _continue = self.creat_assigned_partition(collection, collection_param, mode, partition, has_collection)
             else:
                 _continue = self.creat_none_partition(collection, collection_param, mode, has_collection)
