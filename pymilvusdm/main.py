@@ -2,6 +2,7 @@ import yaml
 import os
 import uuid
 import sys
+import time
 
 # sys.path.append("..")
 from pymilvusdm.hdf5_to_milvus import *
@@ -90,8 +91,10 @@ def mil2mil(config, logger):
         except Exception as e:
             logger.error("The collection name: {} must be a dic".format(config['source_collection']))
             sys.exit(1)
-    
-        m2m.transform_milvus_data(collection_name, config['source_collection'][collection_name])
+
+        while True:
+            m2m.transform_milvus_data(collection_name, config['source_collection'][collection_name])
+            time.sleep(config['sleep'])
     except Exception as e:
         logger.error('Milvus to Milvus Error with: {}'.format(e))
         sys.exit(1)
